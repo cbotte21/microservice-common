@@ -12,7 +12,7 @@ func initEnv() {
 	if !inited {
 		err := godotenv.Load()
 		if err != nil {
-			log.Fatalf("could not load enviroment variables")
+			log.Fatalf("could not load .env file, please create one!")
 		}
 		inited = true
 	}
