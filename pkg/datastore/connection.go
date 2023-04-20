@@ -13,7 +13,7 @@ var mongoClient *mongo.Client = nil
 func GetMongoClient() (*mongo.Client, error) {
 	if mongoClient == nil {
 		//connect
-		client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(enviroment.GetEnvVariable("mongo_uri")))
+		mongoClient, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(enviroment.GetEnvVariable("mongo_uri")))
 
 		//error check
 		if err != nil {
@@ -21,7 +21,7 @@ func GetMongoClient() (*mongo.Client, error) {
 		}
 
 		//ping
-		if err := client.Ping(context.TODO(), readpref.Primary()); err != nil {
+		if err := mongoClient.Ping(context.TODO(), readpref.Primary()); err != nil {
 			panic(err)
 			return nil, err
 		}
