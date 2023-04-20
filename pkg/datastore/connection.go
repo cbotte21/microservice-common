@@ -17,6 +17,7 @@ func GetMongoClient() (*mongo.Client, error) {
 
 		//error check
 		if err != nil {
+			panic(err)
 			return nil, err
 		}
 
