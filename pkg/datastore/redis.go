@@ -1,7 +1,6 @@
 package datastore
 
 import (
-	"fmt"
 	"github.com/cbotte21/microservice-common/pkg/enviroment"
 	"github.com/cbotte21/microservice-common/pkg/schema"
 	"github.com/go-redis/redis/v8"
@@ -22,7 +21,6 @@ func (client *RedisClient[T]) Init() error {
 
 func (client *RedisClient[T]) Find(schema T) (T, error) {
 	res, err := client.JSONGet(schema.Key(), ".")
-	fmt.Println(res)
 	return schema, err
 }
 
