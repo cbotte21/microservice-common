@@ -5,6 +5,7 @@ go 1.20
 require (
 	github.com/go-redis/redis/v8 v8.4.4
 	github.com/golang-jwt/jwt/v4 v4.5.0
+	github.com/gomodule/redigo v1.8.3
 	github.com/joho/godotenv v1.5.1
 	github.com/nitishm/go-rejson/v4 v4.1.0
 	go.mongodb.org/mongo-driver v1.11.2
