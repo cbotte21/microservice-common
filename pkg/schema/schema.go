@@ -1,6 +1,7 @@
 package schema
 
 type Schema[T any] interface {
-	Database() string
-	Collection() string
+	Database() string   // MongoDB field
+	Collection() string // MongoDB field
+	Key() string        // Redis field
 }

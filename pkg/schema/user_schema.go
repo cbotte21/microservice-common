@@ -7,12 +7,12 @@ import (
 
 // User struct
 type User struct { //Payload
-	Id               string `bson:"_id,omitempty"`
-	Email            string `bson:"email,omitempty"`
-	Password         string `bson:"password,omitempty"`
-	InitialTimestamp string `bson:"intitial_timestamp,omitempty"`
-	RecentTimestamp  string `bson:"recent_timestamp,omitempty"`
-	Role             int    `bson:"role,omitempty"`
+	Id               string `bson:"_id,omitempty" json:"_id,omitempty" redis:"_id"`
+	Email            string `bson:"email,omitempty" json:"email,omitempty" redis:"email"`
+	Password         string `bson:"password,omitempty" json:"password,omitempty" redis:"password"`
+	InitialTimestamp string `bson:"initial_timestamp,omitempty" json:"initial_timestamp,omitempty" redis:"initial_timestamp"`
+	RecentTimestamp  string `bson:"recent_timestamp,omitempty" json:"recent_timestamp,omitempty" redis:"recent_timestamp"`
+	Role             int    `bson:"role,omitempty" json:"role,omitempty" redis:"role"`
 }
 
 func (user User) Database() string {
@@ -21,6 +21,10 @@ func (user User) Database() string {
 
 func (user User) Collection() string {
 	return "users"
+}
+
+func (user User) Key() string {
+	return user.Id
 }
 
 func (user *User) SetPassword(candidePassword string) error {
