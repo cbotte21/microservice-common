@@ -24,7 +24,10 @@ func (client *RedisClient[T]) Init() error {
 func (client *RedisClient[T]) Find(schema T) (T, error) {
 	res, err := client.JSONGet(schema.Key(), ".")
 	bytes, err := redigo.Bytes(res, err)
-	_ = json.Unmarshal(bytes, schema)
+	if err != nil {
+		return schema, err
+	}
+	err = json.Unmarshal(bytes, schema)
 	return schema, err
 }
 
