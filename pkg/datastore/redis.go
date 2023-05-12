@@ -2,6 +2,7 @@ package datastore
 
 import (
 	"fmt"
+	"github.com/cbotte21/microservice-common/pkg/enviroment"
 	"github.com/cbotte21/microservice-common/pkg/schema"
 	"github.com/go-redis/redis/v8"
 	"github.com/nitishm/go-rejson/v4"
@@ -13,7 +14,8 @@ type RedisClient[T schema.Schema[any]] struct {
 
 func (client *RedisClient[T]) Init() error {
 	client.Handler = rejson.NewReJSONHandler()
-	client.SetGoRedisClient(redis.NewClient(&redis.Options{Addr: "localhost:6379", DB: 0}))
+	enviroment.VerifyEnvVariable("redis_addr")
+	client.SetGoRedisClient(redis.NewClient(&redis.Options{Addr: enviroment.GetEnvVariable("redis_addr"), DB: 0}))
 
 	return nil
 }
