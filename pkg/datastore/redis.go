@@ -27,7 +27,7 @@ func (client *RedisClient[T]) Find(schema T) (T, error) {
 	if err != nil {
 		return schema, err
 	}
-	err = json.Unmarshal(bytes, schema)
+	err = json.Unmarshal(bytes, &schema)
 	return schema, err
 }
 
