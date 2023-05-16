@@ -30,11 +30,12 @@ func (client *RedisClient[T]) Init() error {
 	return nil
 }
 
-func (client *RedisClient[T]) InitTest() {
+func (client *RedisClient[T]) InitTest() redismock.ClientMock {
 	client.ReJsonHandler = rejson.NewReJSONHandler()
-	db, _ := redismock.NewClientMock()
+	db, mock := redismock.NewClientMock()
 	client.GoRedisClient = db
 	client.ReJsonHandler.SetGoRedisClient(client.GoRedisClient)
+	return mock
 }
 
 func (client *RedisClient[T]) Find(schema T) (T, error) {
