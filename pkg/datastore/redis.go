@@ -1,6 +1,7 @@
 package datastore
 
 import (
+	"context"
 	"encoding/json"
 	"github.com/cbotte21/microservice-common/pkg/enviroment"
 	"github.com/cbotte21/microservice-common/pkg/schema"
@@ -10,19 +11,30 @@ import (
 )
 
 type RedisClient[T schema.Schema[any]] struct {
-	*rejson.Handler
+	GoRedisClient *redis.Client
+	ReJsonHandler *rejson.Handler
+}
+
+func (client *RedisClient[T]) Subscribe(channels ...string) *redis.PubSub {
+	ctx := context.Background()
+	subscriber := client.GoRedisClient.Subscribe(ctx, channels...)
+	return subscriber
+}
+
+func (client *RedisClient[T]) Publish(channel string, message any) error {
+	return client.GoRedisClient.Publish(context.Background(), channel, message).Err()
 }
 
 func (client *RedisClient[T]) Init() error {
-	client.Handler = rejson.NewReJSONHandler()
+	client.ReJsonHandler = rejson.NewReJSONHandler()
 	enviroment.VerifyEnvVariable("redis_addr")
-	client.SetGoRedisClient(redis.NewClient(&redis.Options{Addr: enviroment.GetEnvVariable("redis_addr"), DB: 0}))
-
+	client.GoRedisClient = redis.NewClient(&redis.Options{Addr: enviroment.GetEnvVariable("redis_addr"), DB: 0})
+	client.ReJsonHandler.SetGoRedisClient(client.GoRedisClient)
 	return nil
 }
 
 func (client *RedisClient[T]) Find(schema T) (T, error) {
-	res, err := client.JSONGet(schema.Key(), ".")
+	res, err := client.ReJsonHandler.JSONGet(schema.Key(), ".")
 	bytes, err := redigo.Bytes(res, err)
 	if err != nil {
 		return schema, err
@@ -32,15 +44,15 @@ func (client *RedisClient[T]) Find(schema T) (T, error) {
 }
 
 func (client *RedisClient[T]) Create(schema T) error {
-	_, err := client.JSONSet(schema.Key(), ".", schema)
+	_, err := client.ReJsonHandler.JSONSet(schema.Key(), ".", schema)
 	return err
 }
 
-func (client *RedisClient[T]) Update(_, Y T) error {
-	return client.Create(Y)
+func (client *RedisClient[T]) Update(_, schema T) error {
+	return client.Create(schema)
 }
 
 func (client *RedisClient[T]) Delete(schema T) error {
-	_, err := client.JSONDel(schema.Key(), ".")
+	_, err := client.ReJsonHandler.JSONDel(schema.Key(), ".")
 	return err
 }

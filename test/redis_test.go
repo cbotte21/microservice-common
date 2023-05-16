@@ -1,10 +1,55 @@
 package test
 
 import (
+	"context"
 	"github.com/cbotte21/microservice-common/pkg/datastore"
 	"github.com/cbotte21/microservice-common/pkg/schema"
 	"testing"
 )
+
+func TestPubSubRedis(t *testing.T) {
+	client := datastore.RedisClient[schema.User]{}
+
+	err := client.Init()
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+
+	sub := client.Subscribe("test", "test2")
+	pub := client.Publish("test", "hello")
+	pub2 := client.Publish("test2", "hello")
+
+	if sub == nil || pub != nil || pub2 != nil {
+		if sub == nil {
+			t.Fatalf("Subscription was null")
+		}
+
+		if pub != nil {
+			t.Fatalf(pub.Error())
+		}
+
+		t.Fatalf(pub2.Error())
+	}
+
+	msgCount := 0
+
+	for {
+		_, err := sub.ReceiveMessage(context.Background())
+		if err != nil {
+			t.Fatalf(err.Error())
+		}
+
+		msgCount++
+
+		if msgCount == 2 {
+			break
+		}
+	}
+
+	if msgCount != 2 {
+		t.Fatalf("Message count was incorrect")
+	}
+}
 
 func TestCreateRedis(t *testing.T) {
 	client := datastore.RedisClient[schema.User]{}
