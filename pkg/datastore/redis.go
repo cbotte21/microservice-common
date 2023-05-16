@@ -5,51 +5,49 @@ import (
 	"encoding/json"
 	"github.com/cbotte21/microservice-common/pkg/enviroment"
 	"github.com/cbotte21/microservice-common/pkg/schema"
-	"github.com/go-redis/redis/v8"
-	"github.com/go-redis/redismock/v8"
-	redigo "github.com/gomodule/redigo/redis"
-	"github.com/nitishm/go-rejson/v4"
+	"github.com/go-redis/redismock/v9"
+	"github.com/redis/go-redis/v9"
+	"time"
 )
 
 type RedisClient[T schema.Schema[any]] struct {
-	GoRedisClient *redis.Client
-	ReJsonHandler *rejson.Handler
+	GoRedis *redis.Client
+	ctx     context.Context
 }
 
-func (client *RedisClient[T]) Init() error {
-	client.ReJsonHandler = rejson.NewReJSONHandler()
-
+func (client *RedisClient[T]) Init() {
 	address := enviroment.GetEnvVariable("redis_addr")
-
 	if enviroment.GetEnvVariable("redis_addr") == "" {
 		address = "127.0.0.1:6379"
 	}
-
-	client.GoRedisClient = redis.NewClient(&redis.Options{Addr: address, DB: 0})
-	client.ReJsonHandler.SetGoRedisClient(client.GoRedisClient)
-	return nil
+	client.GoRedis = redis.NewClient(&redis.Options{Addr: address, DB: 0})
+	client.InitClient(client.GoRedis)
 }
 
-func (client *RedisClient[T]) InitTest() redismock.ClientMock {
-	client.ReJsonHandler = rejson.NewReJSONHandler()
+func (client *RedisClient[T]) InitClient(_client *redis.Client) {
+	client.GoRedis = _client
+	client.ctx = context.Background()
+}
+
+func (client *RedisClient[T]) MockInit() redismock.ClientMock {
 	db, mock := redismock.NewClientMock()
-	client.GoRedisClient = db
-	client.ReJsonHandler.SetGoRedisClient(client.GoRedisClient)
+	client.GoRedis = db
+	client.ctx = context.Background()
 	return mock
 }
 
 func (client *RedisClient[T]) Find(schema T) (T, error) {
-	res, err := client.ReJsonHandler.JSONGet(schema.Key(), ".")
-	bytes, err := redigo.Bytes(res, err)
+	val, err := client.GoRedis.Get(client.ctx, schema.Key()).Result()
 	if err != nil {
 		return schema, err
 	}
-	err = json.Unmarshal(bytes, &schema)
+	err = json.Unmarshal([]byte(val), &schema)
 	return schema, err
 }
 
 func (client *RedisClient[T]) Create(schema T) error {
-	_, err := client.ReJsonHandler.JSONSet(schema.Key(), ".", schema)
+	setCmd := client.GoRedis.Set(client.ctx, schema.Key(), schema, 10*time.Second)
+	_, err := setCmd.Result()
 	return err
 }
 
@@ -58,16 +56,14 @@ func (client *RedisClient[T]) Update(_, schema T) error {
 }
 
 func (client *RedisClient[T]) Delete(schema T) error {
-	_, err := client.ReJsonHandler.JSONDel(schema.Key(), ".")
+	_, err := client.GoRedis.Del(client.ctx, schema.Key()).Result()
 	return err
 }
 
 func (client *RedisClient[T]) Subscribe(channels ...string) *redis.PubSub {
-	ctx := context.Background()
-	subscriber := client.GoRedisClient.Subscribe(ctx, channels...)
-	return subscriber
+	return client.GoRedis.Subscribe(client.ctx, channels...)
 }
 
 func (client *RedisClient[T]) Publish(channel string, message any) error {
-	return client.GoRedisClient.Publish(context.Background(), channel, message).Err()
+	return client.GoRedis.Publish(client.ctx, channel, message).Err()
 }
