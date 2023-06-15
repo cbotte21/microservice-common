@@ -2,7 +2,6 @@ package test
 
 import (
 	"context"
-	"fmt"
 	"github.com/cbotte21/microservice-common/pkg/datastore"
 	"github.com/cbotte21/microservice-common/pkg/schema"
 	"testing"
@@ -17,8 +16,7 @@ func TestPubSubRedis(t *testing.T) {
 	}
 
 	sub := client.Subscribe("test", "test2")
-	pub := client.Publish("test",
-		"hello")
+	pub := client.Publish("test", "hello")
 	pub2 := client.Publish("test2", "hello")
 
 	if sub == nil || pub != nil || pub2 != nil {
@@ -98,8 +96,6 @@ func TestFindRedis(t *testing.T) {
 		t.Fatalf(err.Error())
 	}
 
-	fmt.Println(user)
-	fmt.Println(res)
 	if res.Email != user.Email {
 		t.Fatalf("received incorrect data!")
 	}
