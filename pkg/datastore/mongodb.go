@@ -15,6 +15,7 @@ type MongoClient[T schema.Schema[any]] struct {
 
 func (client *MongoClient[T]) Init() error {
 	enviroment.VerifyEnvVariable("mongo_uri")
+	enviroment.VerifyEnvVariable("mongo_db")
 	if client.Client == nil {
 		//connect
 		var err error

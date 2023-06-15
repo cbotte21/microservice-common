@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"golang.org/x/crypto/bcrypt"
+	"os"
 )
 
 // User struct
@@ -17,7 +18,7 @@ type User struct { //Payload
 }
 
 func (user User) Database() string {
-	return "auth"
+	return os.Getenv("mongo_db")
 }
 
 func (user User) Collection() string {
