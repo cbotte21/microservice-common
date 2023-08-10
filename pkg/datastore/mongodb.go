@@ -2,7 +2,7 @@ package datastore
 
 import (
 	"context"
-	"github.com/cbotte21/microservice-common/pkg/enviroment"
+	"github.com/cbotte21/microservice-common/pkg/environment"
 	"github.com/cbotte21/microservice-common/pkg/schema"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -14,12 +14,13 @@ type MongoClient[T schema.Schema[any]] struct {
 }
 
 func (client *MongoClient[T]) Init() error {
-	enviroment.VerifyEnvVariable("mongo_uri")
-	enviroment.VerifyEnvVariable("mongo_db")
+	environment.VerifyEnvVariable("mongo_uri")
+	environment.VerifyEnvVariable("mongo_db")
+
 	if client.Client == nil {
 		//connect
 		var err error
-		client.Client, err = mongo.Connect(context.TODO(), options.Client().ApplyURI(enviroment.GetEnvVariable("mongo_uri")))
+		client.Client, err = mongo.Connect(context.TODO(), options.Client().ApplyURI(environment.GetEnvVariable("mongo_uri")))
 
 		//error check
 		if err != nil {

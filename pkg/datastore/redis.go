@@ -3,7 +3,7 @@ package datastore
 import (
 	"context"
 	"encoding/json"
-	"github.com/cbotte21/microservice-common/pkg/enviroment"
+	"github.com/cbotte21/microservice-common/pkg/environment"
 	"github.com/cbotte21/microservice-common/pkg/schema"
 	"github.com/go-redis/redismock/v9"
 	"github.com/redis/go-redis/v9"
@@ -16,10 +16,8 @@ type RedisClient[T schema.Schema[any]] struct {
 }
 
 func (client *RedisClient[T]) Init() {
-	address := enviroment.GetEnvVariable("redis_addr")
-	if enviroment.GetEnvVariable("redis_addr") == "" {
-		address = "127.0.0.1:6379"
-	}
+	environment.VerifyEnvVariable("redis_addr")
+	address := environment.GetEnvVariable("redis_addr") // Ex) "127.0.0.1:6379"
 	client.GoRedis = redis.NewClient(&redis.Options{Addr: address, DB: 0})
 	client.InitClient(client.GoRedis)
 }
