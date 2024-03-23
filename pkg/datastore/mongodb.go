@@ -14,13 +14,12 @@ type MongoClient[T schema.Schema[any]] struct {
 }
 
 func (client *MongoClient[T]) Init() error {
-	environment.VerifyEnvVariable("mongo_uri")
-	environment.VerifyEnvVariable("mongo_db")
+	environment.VerifyEnvVariable("mongo_addr")
 
 	if client.Client == nil {
 		//connect
 		var err error
-		client.Client, err = mongo.Connect(context.TODO(), options.Client().ApplyURI(environment.GetEnvVariable("mongo_uri")))
+		client.Client, err = mongo.Connect(context.TODO(), options.Client().ApplyURI(environment.GetEnvVariable("mongo_addr")))
 
 		//error check
 		if err != nil {
