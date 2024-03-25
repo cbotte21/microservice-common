@@ -1,37 +1,48 @@
 package jwtParser
 
 import (
-	"github.com/cbotte21/microservice-common/pkg/schema"
+	"errors"
 	"github.com/golang-jwt/jwt/v4"
-	"time"
 )
 
 type JwtContent struct {
-	Id   string `json:"_id"`
-	Role int    `json:"role"`
 	jwt.RegisteredClaims
 }
 
-const EXPIRY_HOURS time.Duration = 14
-
 type JwtSecret string
 
-func (secret JwtSecret) GenerateJWT(user schema.User) (string, error) { //time.Now().Unix() + int64(60*60*EXPIRY_HOURS)
-	claims := JwtContent{
-		user.Id,
-		user.Role,
-		jwt.RegisteredClaims{
-			// A usual scenario is to set the expiration time relative to the current time
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(EXPIRY_HOURS * time.Hour)),
-			IssuedAt:  jwt.NewNumericDate(time.Now()),
-			NotBefore: jwt.NewNumericDate(time.Now()),
-			Issuer:    "cbotte21",
-			Subject:   "jwt",
-			ID:        "1",
-			Audience:  []string{"client"},
-		},
+// Redeem returns the contents of a jwt
+func (secret JwtSecret) Redeem(userToken string) (*JwtContent, error) {
+	token, err := jwt.ParseWithClaims(userToken, &JwtContent{}, func(token *jwt.Token) (interface{}, error) {
+		return []byte(secret), nil
+	})
+	if err == nil {
+		if claims, ok := token.Claims.(*JwtContent); ok && token.Valid {
+			return claims, nil
+		}
 	}
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenString, err := token.SignedString([]byte(secret))
-	return tokenString, err
+
+	return nil, err
+}
+
+// ValidateJWT returns nil if the token is valid
+func (secret JwtSecret) ValidateJWT(tokenString string) error {
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		// Don't forget to validate the alg is what you expect:
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); ok {
+			return []byte(secret), nil
+		}
+
+		return nil, errors.New("could not parse token")
+	})
+
+	if err != nil {
+		return errors.New("could not parse token")
+	}
+
+	_, ok := token.Claims.(jwt.MapClaims)
+	if ok && token.Valid {
+		return nil
+	}
+	return errors.New("could not claim token")
 }
