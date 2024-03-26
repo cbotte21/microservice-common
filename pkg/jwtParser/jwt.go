@@ -2,7 +2,9 @@ package jwtParser
 
 import (
 	"context"
+	"fmt"
 	"github.com/Nerzal/gocloak/v13"
+	"github.com/golang-jwt/jwt/v5"
 )
 
 type JwtParser struct {
@@ -20,27 +22,18 @@ func NewJwtParser(clientId, clientSecret, realm, url string) *JwtParser {
 }
 
 // Redeem returns the contents of a jwt
-func (secret JwtParser) Redeem(accessToken string) (*gocloak.IntroSpectTokenResult, error) {
-	rptResult, err := secret.keycloak.RetrospectToken(context.Background(), accessToken, secret.ClientId, secret.ClientSecret, secret.Realm)
+func (secret JwtParser) Redeem(accessToken string) (*jwt.MapClaims, error) {
+	token, claims, err := secret.keycloak.DecodeAccessToken(context.Background(), accessToken, secret.Realm)
 	if err != nil {
-		panic("Inspection failed:" + err.Error())
+		return nil, err
 	}
-
-	if !*rptResult.Active {
-		panic("Token is not active")
-	}
-	return rptResult, nil
+	fmt.Println(token)
+	fmt.Println(claims)
+	return claims, nil
 }
 
 // ValidateJWT returns nil if the token is valid
 func (secret JwtParser) ValidateJWT(accessToken string) error {
-	rptResult, err := secret.keycloak.RetrospectToken(context.Background(), accessToken, secret.ClientId, secret.ClientSecret, secret.Realm)
-	if err != nil {
-		panic("Inspection failed:" + err.Error())
-	}
-
-	if !*rptResult.Active {
-		panic("Token is not active")
-	}
-	return nil
+	_, _, err := secret.keycloak.DecodeAccessToken(context.Background(), accessToken, secret.Realm)
+	return err
 }
