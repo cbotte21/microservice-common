@@ -7,7 +7,6 @@ import (
 	"github.com/cbotte21/microservice-common/pkg/schema"
 	"github.com/go-redis/redismock/v9"
 	"github.com/redis/go-redis/v9"
-	"time"
 )
 
 type RedisClient[T schema.Schema[any]] struct {
@@ -44,7 +43,7 @@ func (client *RedisClient[T]) Find(schema T) (T, error) {
 }
 
 func (client *RedisClient[T]) Create(schema T) error {
-	setCmd := client.GoRedis.Set(client.ctx, schema.Key(), schema, 10*time.Second)
+	setCmd := client.GoRedis.Set(client.ctx, schema.Key(), schema, 0)
 	_, err := setCmd.Result()
 	return err
 }
