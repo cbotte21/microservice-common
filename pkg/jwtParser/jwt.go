@@ -8,16 +8,14 @@ import (
 )
 
 type JwtParser struct {
-	ClientId, ClientSecret, Realm string
-	keycloak                      *gocloak.GoCloak
+	Realm    string
+	keycloak *gocloak.GoCloak
 }
 
-func NewJwtParser(clientId, clientSecret, realm, url string) *JwtParser {
+func NewJwtParser(realm, url string) *JwtParser {
 	return &JwtParser{
-		ClientId:     clientId,
-		ClientSecret: clientSecret,
-		Realm:        realm,
-		keycloak:     gocloak.NewClient(url),
+		Realm:    realm,
+		keycloak: gocloak.NewClient(url),
 	}
 }
 
