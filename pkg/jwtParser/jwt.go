@@ -1,48 +1,46 @@
 package jwtParser
 
 import (
-	"errors"
-	"github.com/golang-jwt/jwt/v4"
+	"context"
+	"github.com/Nerzal/gocloak/v13"
 )
 
-type JwtContent struct {
-	jwt.RegisteredClaims
+type JwtParser struct {
+	ClientId, ClientSecret, Realm string
+	keycloak                      *gocloak.GoCloak
 }
 
-type JwtSecret string
+func NewJwtParser(clientId, clientSecret, realm, url string) *JwtParser {
+	return &JwtParser{
+		ClientId:     clientId,
+		ClientSecret: clientSecret,
+		Realm:        realm,
+		keycloak:     gocloak.NewClient(url),
+	}
+}
 
 // Redeem returns the contents of a jwt
-func (secret JwtSecret) Redeem(userToken string) (*JwtContent, error) {
-	token, err := jwt.ParseWithClaims(userToken, &JwtContent{}, func(token *jwt.Token) (interface{}, error) {
-		return []byte(secret), nil
-	})
-	if err == nil {
-		if claims, ok := token.Claims.(*JwtContent); ok && token.Valid {
-			return claims, nil
-		}
+func (secret JwtParser) Redeem(accessToken string) (*gocloak.IntroSpectTokenResult, error) {
+	rptResult, err := secret.keycloak.RetrospectToken(context.Background(), accessToken, secret.ClientId, secret.ClientSecret, secret.Realm)
+	if err != nil {
+		panic("Inspection failed:" + err.Error())
 	}
 
-	return nil, err
+	if !*rptResult.Active {
+		panic("Token is not active")
+	}
+	return rptResult, nil
 }
 
 // ValidateJWT returns nil if the token is valid
-func (secret JwtSecret) ValidateJWT(tokenString string) error {
-	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		// Don't forget to validate the alg is what you expect:
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); ok {
-			return []byte(secret), nil
-		}
-
-		return nil, errors.New("could not parse token")
-	})
-
+func (secret JwtParser) ValidateJWT(accessToken string) error {
+	rptResult, err := secret.keycloak.RetrospectToken(context.Background(), accessToken, secret.ClientId, secret.ClientSecret, secret.Realm)
 	if err != nil {
-		return errors.New("could not parse token")
+		panic("Inspection failed:" + err.Error())
 	}
 
-	_, ok := token.Claims.(jwt.MapClaims)
-	if ok && token.Valid {
-		return nil
+	if !*rptResult.Active {
+		panic("Token is not active")
 	}
-	return errors.New("could not claim token")
+	return nil
 }
