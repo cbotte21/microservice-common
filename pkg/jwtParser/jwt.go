@@ -2,7 +2,6 @@ package jwtParser
 
 import (
 	"context"
-	"fmt"
 	"github.com/Nerzal/gocloak/v13"
 	"github.com/golang-jwt/jwt/v5"
 )
@@ -21,12 +20,10 @@ func NewJwtParser(realm, url string) *JwtParser {
 
 // Redeem returns the contents of a jwt
 func (secret JwtParser) Redeem(accessToken string) (*jwt.MapClaims, error) {
-	token, claims, err := secret.keycloak.DecodeAccessToken(context.Background(), accessToken, secret.Realm)
+	_, claims, err := secret.keycloak.DecodeAccessToken(context.Background(), accessToken, secret.Realm)
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println(token)
-	fmt.Println(claims)
 	return claims, nil
 }
 
