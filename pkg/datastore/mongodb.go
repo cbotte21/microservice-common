@@ -7,13 +7,14 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
+	"log"
 )
 
 type MongoClient[T schema.Schema[any]] struct {
 	*mongo.Client
 }
 
-func (client *MongoClient[T]) Init() error {
+func (client *MongoClient[T]) Init() {
 	if client.Client == nil {
 		//connect
 		var err error
@@ -21,17 +22,14 @@ func (client *MongoClient[T]) Init() error {
 
 		//error check
 		if err != nil {
-			panic(err)
-			return err
+			log.Fatalf(err.Error())
 		}
 
 		//ping
 		if err := client.Ping(context.TODO(), readpref.Primary()); err != nil {
-			panic(err)
-			return err
+			log.Fatalf(err.Error())
 		}
 	}
-	return nil
 }
 
 func (client *MongoClient[T]) Find(schema T) (T, error) {

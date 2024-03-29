@@ -3,7 +3,7 @@ package datastore
 import "github.com/cbotte21/microservice-common/pkg/schema"
 
 type Datastore[T schema.Schema[any]] interface {
-	Init() error
+	Init()
 
 	Find(T) (T, error)
 	Create(T) error
