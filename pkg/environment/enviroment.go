@@ -25,5 +25,5 @@ func GetEnvVariable(name string) string {
 	if !uriPresent {
 		log.Fatalf("could not find {" + name + "} environment variable")
 	}
-	return os.Getenv(envVar)
+	return envVar
 }
