@@ -14,8 +14,6 @@ type MongoClient[T schema.Schema[any]] struct {
 }
 
 func (client *MongoClient[T]) Init() error {
-	environment.VerifyEnvVariable("mongo_addr")
-
 	if client.Client == nil {
 		//connect
 		var err error
