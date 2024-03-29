@@ -18,15 +18,12 @@ func initEnv() {
 	}
 }
 
-func VerifyEnvVariable(name string) {
+func GetEnvVariable(name string) string {
 	initEnv()
 
-	_, uriPresent := os.LookupEnv(name)
+	envVar, uriPresent := os.LookupEnv(name)
 	if !uriPresent {
 		log.Fatalf("could not find {" + name + "} environment variable")
 	}
-}
-
-func GetEnvVariable(name string) string {
-	return os.Getenv(name)
+	return os.Getenv(envVar)
 }
