@@ -3,6 +3,7 @@ package datastore
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"github.com/cbotte21/microservice-common/pkg/environment"
 	"github.com/cbotte21/microservice-common/pkg/schema"
 	"github.com/go-redis/redismock/v9"
@@ -15,7 +16,6 @@ type RedisClient[T schema.Schema[any]] struct {
 }
 
 func (client *RedisClient[T]) Init() {
-	environment.VerifyEnvVariable("redis_addr")
 	address := environment.GetEnvVariable("redis_addr") // Ex) "127.0.0.1:6379"
 	client.GoRedis = redis.NewClient(&redis.Options{Addr: address, DB: 0})
 	client.InitClient(client.GoRedis)
@@ -57,10 +57,32 @@ func (client *RedisClient[T]) Delete(schema T) error {
 	return err
 }
 
+// PubSub
+
 func (client *RedisClient[T]) Subscribe(channels ...string) *redis.PubSub {
 	return client.GoRedis.Subscribe(client.ctx, channels...)
 }
 
 func (client *RedisClient[T]) Publish(channel string, message any) error {
 	return client.GoRedis.Publish(client.ctx, channel, message).Err()
+}
+
+// Queue
+
+func (client *RedisClient[T]) Enqueue(schema T) error {
+	res := client.GoRedis.LPush(context.Background(), schema.Key(), schema)
+	return res.Err()
+}
+
+func (client *RedisClient[T]) Dequeue(schema T) (T, error) {
+	resInArr, err := client.GoRedis.BRPop(context.Background(), 0, schema.Key()).Result()
+	if err != nil {
+		return schema, err
+	}
+	if len(resInArr) == 0 {
+		return schema, errors.New("queue is empty")
+	}
+	res := resInArr[0]
+	err = json.Unmarshal([]byte(res), &schema)
+	return schema, nil
 }
