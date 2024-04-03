@@ -41,7 +41,6 @@ func (client *MongoClient[T]) Find(schema T) (T, error) {
 }
 
 func (client *MongoClient[T]) FindAll() ([]T, error) {
-
 	collection := client.Database(client.schema.Database()).Collection(client.schema.Collection())
 	cursor, err := collection.Find(context.TODO(), bson.D{})
 	if err != nil {
