@@ -68,7 +68,7 @@ func (client *MongoClient[T]) Create(schema T) error {
 
 func (client *MongoClient[T]) Update(X, Y T) error {
 	collection := client.Database(X.Database()).Collection(X.Collection())
-	_, err := collection.UpdateOne(context.TODO(), X, Y)
+	_, err := collection.UpdateOne(context.TODO(), X, bson.M{"$set": Y})
 	return err
 }
 
