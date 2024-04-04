@@ -1,8 +1,11 @@
 package validate
 
-import "net/url"
+import (
+	"github.com/cbotte21/microservice-common/pkg/response"
+	"net/url"
+)
 
-const template = "Request must contain the following field(s): "
+const template = "request must contain the following field(s): "
 
 func ValidateRequestWithErrorMessage(payload url.Values, params ...string) ([]byte, bool) {
 	res := template
@@ -14,5 +17,5 @@ func ValidateRequestWithErrorMessage(payload url.Values, params ...string) ([]by
 			}
 		}
 	}
-	return []byte(res), template == res
+	return response.GetError(res), template == res
 }
