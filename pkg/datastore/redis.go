@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/cbotte21/microservice-common/pkg/environment"
 	"github.com/cbotte21/microservice-common/pkg/schema"
 	"github.com/go-redis/redismock/v9"
@@ -83,8 +84,11 @@ func (client *RedisClient[T]) Dequeue() (T, error) {
 	if len(resInArr) == 0 {
 		return client.Schema, errors.New("queue is empty")
 	}
+	fmt.Println(resInArr)
 	res := resInArr[0]
+	fmt.Println(res)
 	var parsed T
 	err = json.Unmarshal([]byte(res), &parsed)
+	fmt.Println(parsed)
 	return parsed, err
 }
