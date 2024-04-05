@@ -85,7 +85,7 @@ func (client *RedisClient[T]) Dequeue() (T, error) {
 		return client.Schema, errors.New("queue is empty")
 	}
 	fmt.Println(resInArr)
-	res := resInArr[0]
+	res := resInArr[1]
 	fmt.Println(res)
 	var parsed T
 	err = json.Unmarshal([]byte(res), &parsed)
