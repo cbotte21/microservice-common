@@ -12,6 +12,7 @@ import (
 
 type RedisClient[T schema.Schema[any]] struct {
 	GoRedis *redis.Client
+	Schema  T
 	ctx     context.Context
 }
 
@@ -74,15 +75,16 @@ func (client *RedisClient[T]) Enqueue(schema T) error {
 	return res.Err()
 }
 
-func (client *RedisClient[T]) Dequeue(schema T) (T, error) {
-	resInArr, err := client.GoRedis.BRPop(context.Background(), 0, schema.Key()).Result()
+func (client *RedisClient[T]) Dequeue() (T, error) {
+	resInArr, err := client.GoRedis.BRPop(context.Background(), 0, client.Schema.Key()).Result()
 	if err != nil {
-		return schema, err
+		return client.Schema, err
 	}
 	if len(resInArr) == 0 {
-		return schema, errors.New("queue is empty")
+		return client.Schema, errors.New("queue is empty")
 	}
 	res := resInArr[0]
-	err = json.Unmarshal([]byte(res), &schema)
-	return schema, nil
+	var parsed T
+	err = json.Unmarshal([]byte(res), &parsed)
+	return parsed, nil
 }
