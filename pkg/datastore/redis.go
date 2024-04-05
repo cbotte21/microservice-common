@@ -86,5 +86,5 @@ func (client *RedisClient[T]) Dequeue() (T, error) {
 	res := resInArr[0]
 	var parsed T
 	err = json.Unmarshal([]byte(res), &parsed)
-	return parsed, nil
+	return parsed, err
 }
