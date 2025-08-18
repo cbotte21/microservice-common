@@ -1,7 +1,6 @@
 package logger
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -11,7 +10,7 @@ type CRUD = string
 
 const (
 	Create   CRUD = "Create"
-	Retrieve CRUD = "Retrievee"
+	Retrieve CRUD = "Retrieve"
 	Update   CRUD = "Update"
 	Delete   CRUD = "Delete"
 )
@@ -19,44 +18,47 @@ const (
 type Event struct {
 	Timestamp time.Time `json:"timestamp"`
 	Operation CRUD      `json:"operation"`
-	Target    string    `json:"target"`
+	Location  string    `json:"location"`
 	Context   any       `json:"context,omitempty"`
 }
 
 type Logger interface {
 	Write(event Event)
+	Err() <-chan error
 }
 
-type StandardLogger struct {
-	ctx    context.Context
-	cancel context.CancelFunc
-	logs   chan Event
-	errors chan<- error
+type TransactionLogger struct {
+	events chan<- Event
+	errors <-chan error
 }
 
-func NewLogger(ctx context.Context, errors chan<- error, queueLength uint8) Logger {
-	cctx, cancel := context.WithCancel(ctx)
-	l := &StandardLogger{
-		ctx:    cctx,
-		cancel: cancel,
-		logs:   make(chan Event, queueLength),
-		errors: errors,
-	}
-	go l.run()
+func NewLogger(queueLength uint8) Logger {
+	l := &TransactionLogger{}
+	go l.run(queueLength)
 	return l
 }
 
-func (l *StandardLogger) run() {
-	for ev := range l.logs {
+func (l *TransactionLogger) run(queueLength uint8) {
+	events := make(chan Event, queueLength)
+	l.events = events
+
+	errors := make(chan error, 1)
+	l.errors = errors
+
+	for ev := range events {
 		b, err := json.Marshal(ev)
 		if err != nil {
-			l.errors <- err
+			errors <- err
 			continue
 		}
 		fmt.Println(string(b))
 	}
 }
 
-func (l *StandardLogger) Write(event Event) {
-	l.logs <- event
+func (l *TransactionLogger) Write(event Event) {
+	l.events <- event
+}
+
+func (l *TransactionLogger) Err() <-chan error {
+	return l.errors
 }
