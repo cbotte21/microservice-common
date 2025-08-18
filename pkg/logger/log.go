@@ -35,9 +35,6 @@ type StandardLogger struct {
 }
 
 func NewLogger(ctx context.Context, errors chan<- error, queueLength uint8) Logger {
-	if queueLength <= 0 {
-		queueLength = 10
-	}
 	cctx, cancel := context.WithCancel(ctx)
 	l := &StandardLogger{
 		ctx:    cctx,
@@ -50,21 +47,13 @@ func NewLogger(ctx context.Context, errors chan<- error, queueLength uint8) Logg
 }
 
 func (l *StandardLogger) run() {
-	for {
-		select {
-		case <-l.ctx.Done():
-			// Finish queue?
-			fmt.Println("Terminating log queue...")
-			close(l.logs)
-			return
-		case ev := <-l.logs:
-			b, err := json.Marshal(ev)
-			if err != nil {
-				l.errors <- err
-				continue
-			}
-			fmt.Println(string(b))
+	for ev := range l.logs {
+		b, err := json.Marshal(ev)
+		if err != nil {
+			l.errors <- err
+			continue
 		}
+		fmt.Println(string(b))
 	}
 }
 
