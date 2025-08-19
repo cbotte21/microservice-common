@@ -3,6 +3,8 @@ package logger
 import (
 	"encoding/json"
 	"fmt"
+	"os"
+	"strconv"
 	"time"
 )
 
@@ -23,23 +25,33 @@ type Event struct {
 }
 
 type Logger interface {
+	Run()
+
 	Write(event Event)
 	Err() <-chan error
 }
 
-type TransactionLogger struct {
+type STDOUTLogger struct {
 	events chan<- Event
 	errors <-chan error
+
+	eventsQueueLength uint8
 }
 
-func NewLogger(queueLength uint8) Logger {
-	l := &TransactionLogger{}
-	go l.run(queueLength)
-	return l
+func NewSTDOUTLogger() Logger {
+	var eventsQueueLength uint8
+
+	if v, err := strconv.Atoi(os.Getenv("LOGGER_QUEUE_LENGTH")); err != nil {
+		eventsQueueLength = uint8(v)
+	} else {
+		_ = fmt.Errorf("invalid logger queue length")
+	}
+
+	return &STDOUTLogger{eventsQueueLength: eventsQueueLength}
 }
 
-func (l *TransactionLogger) run(queueLength uint8) {
-	events := make(chan Event, queueLength)
+func (l *STDOUTLogger) Run() {
+	events := make(chan Event, l.eventsQueueLength)
 	l.events = events
 
 	errors := make(chan error, 1)
@@ -55,10 +67,10 @@ func (l *TransactionLogger) run(queueLength uint8) {
 	}
 }
 
-func (l *TransactionLogger) Write(event Event) {
+func (l *STDOUTLogger) Write(event Event) {
 	l.events <- event
 }
 
-func (l *TransactionLogger) Err() <-chan error {
+func (l *STDOUTLogger) Err() <-chan error {
 	return l.errors
 }
